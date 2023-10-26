@@ -3,7 +3,6 @@
   --tile: #0F0F0F;
   --correct: #008170;
 }
-@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 html,body {
   background: #232D3F;
   margin: 0;
@@ -16,4 +15,15 @@ html,body {
   align-items: center;
   
 }
-.App * {font-family: 'Pacifico', cursive;}
+
+.startgame-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+}
+
+.error {
+  color: red;
+}

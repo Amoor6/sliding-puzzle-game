@@ -7,7 +7,7 @@ const Tile = ({ number, moveTile, emptyIndex }) => (
       number.value === emptyIndex ? "disabled" : ""
     } slot--${number.index}`}
   >
-    {number.value === emptyIndex ? "" : number.value}
+    <div className="inner-number">{number.value === emptyIndex ? "" : number.value}</div>
   </div>
 );
 

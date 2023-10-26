@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./Board.css";
 import Tile from "../tile/Tile";
 import NewGame from "../new-game/NewGame";
-import Winner from "../Winner/Winner";
+import { useNavigate } from "react-router-dom";
 
 const Board = ({ boardSize }) => {
   const shuffle = () =>
@@ -11,13 +11,13 @@ const Board = ({ boardSize }) => {
       .map((_, i) => i + 1)
       .sort(() => Math.random() - 0.5)
       .map((x, i) => ({ value: x, index: i }));
-
+  const navigate = useNavigate();
   const [numbers, setNumbers] = useState([]);
 
   const reset = () => setNumbers(shuffle());
 
   const checkIsValid = (emptyIndex, tileIndex) => {
-    const size =parseInt(boardSize)
+    const size = parseInt(boardSize);
     if (emptyIndex === tileIndex) return false;
     if (emptyIndex % size === 0) {
       //check left corners
@@ -77,10 +77,13 @@ const Board = ({ boardSize }) => {
   });
 
   useEffect(reset, []);
-
+  function checkWin() {
+    if (!numbers.every((n) => n.value === n.index + 1)) return false;
+    return true;
+  }
   return (
     <div className="game">
-      <div
+      {!checkWin() ? <div
         className="board"
         style={{
           width: boardSize * 100,
@@ -100,9 +103,11 @@ const Board = ({ boardSize }) => {
             />
           );
         })}
-      </div>
-      <Winner numbers={numbers} reset={reset} />
+      </div> : "You Win "}
       <NewGame reset={reset} />
+      <div className="button-wrapper" onClick={() => navigate("/")}>
+        <button>Main Menu</button>
+      </div>
     </div>
   );
 };
