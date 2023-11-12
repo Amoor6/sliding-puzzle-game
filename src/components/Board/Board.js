@@ -13,68 +13,127 @@ const Board = ({ boardSize }) => {
       .map((x, i) => ({ value: x, index: i }));
   const navigate = useNavigate();
   const [numbers, setNumbers] = useState([]);
+  const [animating, setAnimating] = useState(false);
 
   const reset = () => setNumbers(shuffle());
 
-  const checkIsValid = (emptyIndex, tileIndex) => {
-    const size = parseInt(boardSize);
-    if (emptyIndex === tileIndex) return false;
-    if (emptyIndex % size === 0) {
-      //check left corners
-      if (emptyIndex - 1 === tileIndex) return false;
-      if (emptyIndex + 1 === tileIndex) return true;
-    }
-    if (emptyIndex % size === size - 1) {
-      //check right corners
-      if (emptyIndex - 1 === tileIndex) return true;
-      if (emptyIndex + 1 === tileIndex) return false;
-    }
+  const isNeighbor = (index) => {
+    const emptyIndex = numbers.find(
+      (n) => n.value === boardSize * boardSize
+    )?.index;
 
-    if (Math.abs(emptyIndex - tileIndex) === size) return true; //check vertical
-
-    if (Math.abs(emptyIndex - tileIndex) === 1) return true; //check horizontal
-
+    if (
+      [
+        emptyIndex - 1,
+        emptyIndex + 1,
+        emptyIndex - boardSize,
+        emptyIndex + boardSize,
+      ].includes(index) ||
+      animating
+    )
+      return true;
     return false;
   };
 
+  // const checkIsValid = (emptyIndex, tileIndex) => {
+  //   const size = parseInt(boardSize);
+  //   if (emptyIndex === tileIndex) return false;
+  //   if (emptyIndex % size === 0) {
+  //     //check left corners
+  //     if (emptyIndex - 1 === tileIndex) return false;
+  //     if (emptyIndex + 1 === tileIndex) return true;
+
+  //   }
+  //   if (emptyIndex % size === size - 1) {
+  //     //check right corners
+  //     if (emptyIndex - 1 === tileIndex) return true;
+  //     if (emptyIndex + 1 === tileIndex) return false;
+
+  //   }
+
+  //   if (Math.abs(emptyIndex - tileIndex) === size) return true; //check vertical
+
+  //   if (Math.abs(emptyIndex - tileIndex) === 1) return true; //check horizontal
+
+  //   return false;
+  // };
   const moveTile = (tile) => {
+    if (!tile) return;
+
+    setNumbers((prevNumbers) => {
+      const emptyIndex = prevNumbers.find(
+        (n) => n.value === boardSize * boardSize
+      ).index;
+      const newNumbers = [...prevNumbers].map((number) => {
+        if (number.index !== emptyIndex && number.index !== tile.index)
+          return number;
+        else if (number.value === boardSize * boardSize)
+          return { value: boardSize * boardSize, index: tile.index };
+        return { value: tile.value, index: emptyIndex };
+      });
+
+      const tileOneIndex = newNumbers.indexOf((n) => n.value === tile.value);
+      const emptyTileIndex = newNumbers.indexOf(
+        (n) => n.value === boardSize * boardSize
+      );
+      console.log({emptyIndex,tileOneIndex,tile});
+      
+      newNumbers[emptyTileIndex]={ value: tile.value, index: emptyIndex }
+      newNumbers[tileOneIndex]={ value: boardSize * boardSize, index: tile.index }
+
+      setAnimating(true);
+      setTimeout(() => setAnimating(false), 200);
+
+      return newNumbers;
+    });
+  };
+
+  const isInEmptyIndexRow = (tileindex) => {
+    const rowIndex = Math.floor(tileindex / boardSize);
+    const indices = [];
+    for (let i = 0; i < boardSize; i++)
+      indices.push(getTile(rowIndex * boardSize + i));
+
+    if (indices.find((i) => i.value === boardSize * boardSize)) return true;
+    return false;
+  };
+
+  const getTile = (index) => numbers.find((n) => n.index === index);
+
+  const moveRow = (tile) => {
     const emptyTile = numbers.find((n) => n.value === boardSize * boardSize);
-    const emptyIndex = emptyTile.index;
-
-    if (!checkIsValid(emptyIndex, tile.index)) return;
-    console.log("valida");
-    const clone = [...numbers];
-    console.log({ before: clone });
-    const temp = numbers[emptyIndex];
-    clone[emptyIndex] = {
-      value: clone[tile.index].value,
-      index: clone[emptyIndex].index,
-    }; // clone[tile.index];
-    clone[tile.index] = { value: temp.value, index: clone[tile.index].index }; //temp;
-    console.log({ after: clone });
-    setNumbers(clone);
+    if (tile.index > emptyTile.index)
+      for (let i = emptyTile.index + 1; i <= tile.index; i++)
+        moveTile(getTile(i));
+    else
+      for (let i = emptyTile.index - 1; i >= tile.index; i--)
+        moveTile(getTile(i));
   };
 
-  const handleKeyDown = (e) => {
-    const emptyIndex = numbers.find(
-      (n) => n.value === boardSize * boardSize
-    ).index;
-    if (e.keyCode === 37 && !(emptyIndex % boardSize === boardSize - 1))
-      moveTile(numbers.find((n) => n.index === emptyIndex + 1));
-    else if (e.keyCode === 38 && !(emptyIndex > 11))
-      moveTile(numbers.find((n) => n.index === emptyIndex + boardSize));
-    else if (e.keyCode === 39 && !(emptyIndex % boardSize === 0))
-      moveTile(numbers.find((n) => n.index === emptyIndex - 1));
-    else if (e.keyCode === 40 && !(emptyIndex < boardSize))
-      moveTile(numbers.find((n) => n.index === emptyIndex - boardSize));
+  const moveColumn = (tile) => {
+    const emptyTile = numbers.find((n) => n.value === boardSize * boardSize);
+    if (tile.index > emptyTile.index)
+      for (let i = emptyTile.index + 4; i <= tile.index; i += 4)
+        moveTile(getTile(i));
+    else
+      for (let i = emptyTile.index - 4; i >= tile.index; i -= 4)
+        moveTile(getTile(i));
   };
 
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  });
+  const isInSameColumn = (tileIndex) => {
+    const colIndex = tileIndex % boardSize;
+    const indices = [];
+    for (let i = 0; i < boardSize; i++)
+      indices.push(getTile(i * boardSize + colIndex));
+    if (indices.find((i) => i.value === boardSize * boardSize)) return true;
+    return false;
+  };
+  console.log(numbers);
+  const tileClickHandler = (tile) => {
+    if (isNeighbor(tile.index)) moveTile(tile);
+    else if (isInEmptyIndexRow(tile.index)) moveRow(tile);
+    else if (isInSameColumn(tile.index)) moveColumn(tile);
+  };
 
   useEffect(reset, []);
   function checkWin() {
@@ -83,27 +142,31 @@ const Board = ({ boardSize }) => {
   }
   return (
     <div className="game">
-      {!checkWin() ? <div
-        className="board"
-        style={{
-          width: boardSize * 100,
-          height: boardSize * 100,
-          gridTemplateColumns: `repeat(${boardSize},var(--size))`,
-          gridTemplateRows: `repeat(${boardSize},var(--size))`,
-        }}
-      >
-        {/* <OverLay /> */}
-        {numbers.map((x, i) => {
-          return (
-            <Tile
-              key={i}
-              number={x}
-              moveTile={moveTile}
-              emptyIndex={boardSize * boardSize}
-            />
-          );
-        })}
-      </div> : "You Win "}
+      {!checkWin() ? (
+        <div
+          className="board"
+          style={{
+            width: boardSize * 100,
+            height: boardSize * 100,
+            gridTemplateColumns: `repeat(${boardSize},var(--size))`,
+            gridTemplateRows: `repeat(${boardSize},var(--size))`,
+          }}
+        >
+          {/* <OverLay /> */}
+          {numbers.map((x, i) => {
+            return (
+              <Tile
+                key={i}
+                number={x}
+                moveTile={tileClickHandler}
+                emptyIndex={boardSize * boardSize}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        "You Win "
+      )}
       <NewGame reset={reset} />
       <div className="button-wrapper" onClick={() => navigate("/")}>
         <button>Main Menu</button>
