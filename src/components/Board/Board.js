@@ -13,7 +13,7 @@ const Board = ({ boardSize }) => {
       .map((x, i) => ({ value: x, index: i }));
   const navigate = useNavigate();
   const [numbers, setNumbers] = useState([]);
-  const [animating, setAnimating] = useState(false);
+ 
 
   const reset = () => setNumbers(shuffle());
 
@@ -21,42 +21,15 @@ const Board = ({ boardSize }) => {
     const emptyIndex = numbers.find(
       (n) => n.value === boardSize * boardSize
     )?.index;
+    const neighborArr = [emptyIndex - boardSize, emptyIndex + boardSize];
 
-    if (
-      [
-        emptyIndex - 1,
-        emptyIndex + 1,
-        emptyIndex - boardSize,
-        emptyIndex + boardSize,
-      ].includes(index) ||
-      animating
-    )
-      return true;
+    if (index % boardSize !== 0) neighborArr.push(emptyIndex + 1);
+    if (emptyIndex % boardSize !== 0) neighborArr.push(emptyIndex - 1);
+    if (neighborArr.includes(index) ) return true;
     return false;
   };
 
-  // const checkIsValid = (emptyIndex, tileIndex) => {
-  //   const size = parseInt(boardSize);
-  //   if (emptyIndex === tileIndex) return false;
-  //   if (emptyIndex % size === 0) {
-  //     //check left corners
-  //     if (emptyIndex - 1 === tileIndex) return false;
-  //     if (emptyIndex + 1 === tileIndex) return true;
 
-  //   }
-  //   if (emptyIndex % size === size - 1) {
-  //     //check right corners
-  //     if (emptyIndex - 1 === tileIndex) return true;
-  //     if (emptyIndex + 1 === tileIndex) return false;
-
-  //   }
-
-  //   if (Math.abs(emptyIndex - tileIndex) === size) return true; //check vertical
-
-  //   if (Math.abs(emptyIndex - tileIndex) === 1) return true; //check horizontal
-
-  //   return false;
-  // };
   const moveTile = (tile) => {
     if (!tile) return;
 
@@ -72,17 +45,18 @@ const Board = ({ boardSize }) => {
         return { value: tile.value, index: emptyIndex };
       });
 
-      const tileOneIndex = newNumbers.indexOf((n) => n.value === tile.value);
-      const emptyTileIndex = newNumbers.indexOf(
+      const emptyTileIndex = newNumbers.findIndex(
         (n) => n.value === boardSize * boardSize
       );
-      console.log({emptyIndex,tileOneIndex,tile});
-      
-      newNumbers[emptyTileIndex]={ value: tile.value, index: emptyIndex }
-      newNumbers[tileOneIndex]={ value: boardSize * boardSize, index: tile.index }
+      const tileOneIndex = newNumbers.findIndex((n) => n.value === tile.value);
 
-      setAnimating(true);
-      setTimeout(() => setAnimating(false), 200);
+      newNumbers[emptyTileIndex] = { value: tile.value, index: emptyIndex };
+      newNumbers[tileOneIndex] = {
+        value: boardSize * boardSize,
+        index: tile.index,
+      };
+
+;
 
       return newNumbers;
     });
@@ -113,10 +87,10 @@ const Board = ({ boardSize }) => {
   const moveColumn = (tile) => {
     const emptyTile = numbers.find((n) => n.value === boardSize * boardSize);
     if (tile.index > emptyTile.index)
-      for (let i = emptyTile.index + 4; i <= tile.index; i += 4)
+      for (let i = emptyTile.index + boardSize; i <= tile.index; i += boardSize)
         moveTile(getTile(i));
     else
-      for (let i = emptyTile.index - 4; i >= tile.index; i -= 4)
+      for (let i = emptyTile.index - boardSize; i >= tile.index; i -= boardSize)
         moveTile(getTile(i));
   };
 

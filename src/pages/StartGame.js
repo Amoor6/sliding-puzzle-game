@@ -9,7 +9,7 @@ const StartGame = () => {
   const clickHandler = () => {
     if (!parseInt(boardSize) || parseInt(boardSize) === 1)
       return setIsError(true);
-    navigate("/gameBoard", { state: { boardSize } });
+      navigate("/gameBoard", { state: { boardSize: parseInt(boardSize) } });
   };
   return (
     <div className="startgame-box">
